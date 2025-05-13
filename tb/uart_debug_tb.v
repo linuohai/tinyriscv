@@ -6,13 +6,13 @@
 module uart_debug_tb;
 
     // 参数化设置
-    parameter PACKET_DATA_SIZE = 128;  // 每个包的数据大小（字节）
+    parameter PACKET_DATA_SIZE = 32;  // 每个包的数据大小（字节）
     parameter FIRST_PACKET_CRC0_INDEX = 129; // CRC低字节索引
     parameter FIRST_PACKET_CRC1_INDEX = 130; // CRC高字节索引
-    parameter FILE_SIZE_INDEX = 60;     // 第一个包中文件大小字段索引
+    parameter FILE_SIZE_INDEX = 28;     // 第一个包中文件大小字段索引
     parameter BAUD_PERIOD = 8680;       // 115200波特率下的位周期(ns)
     parameter TEST_FILE = "inst.data";   // 测试文件名
-    parameter MAX_ROM_SIZE = 1024;      // 最大ROM大小(字)
+    parameter MAX_ROM_SIZE = 256;      // 最大ROM大小(字)
 
     reg clk;
     reg rst;
@@ -37,7 +37,7 @@ module uart_debug_tb;
     reg [31:0] expected_rom_data[0:MAX_ROM_SIZE-1]; 
     
     // 数据包和CRC
-    reg [7:0] packet_data[0:127];
+    reg [7:0] packet_data[0:PACKET_DATA_SIZE-1];
     reg [15:0] packet_crc;
     
     // CRC计算用临时变量

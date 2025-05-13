@@ -1,13 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.100 (w)1999-2019 BSI
-[*] Tue May 13 02:31:22 2025
+[*] Tue May 13 12:21:14 2025
 [*]
-[dumpfile] "D:\my_work\课程\流片课\tinyriscv\sim\sim\uart_debug_tb.vcd"
+[dumpfile] "D:\my_work\课程\流片课\tinyriscv\sim\uart_debug_tb.vcd"
+[dumpfile_mtime] "Tue May 13 11:58:53 2025"
+[dumpfile_size] 323648617
 [savefile] "D:\my_work\课程\流片课\tinyriscv\sim\uart_debug.gtkw"
 [timestart] 0
 [size] 2560 1369
-[pos] -243 -243
-*-14.000000 22856510000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1 -1
+*-34.000000 22855870000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] uart_debug_tb.
 [treeopen] uart_debug_tb.tinyriscv_soc_top_0.
 [sst_width] 311
@@ -23,9 +25,8 @@ uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.debug_en_i
 uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.state[13:0]
 @200
 -
-@23
-uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.fw_file_size[31:0]
 @22
+uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.fw_file_size[31:0]
 uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.remain_packet_count[15:0]
 @200
 -
@@ -82,8 +83,9 @@ uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.crc_result[15:0]
 @22
 uart_debug_tb.tinyriscv_soc_top_0.u_rom.data_i[31:0]
 uart_debug_tb.tinyriscv_soc_top_0.u_rom.addr_i[31:0]
-@200
+@201
 -
+@200
 -
 -
 @28
@@ -96,5 +98,21 @@ uart_debug_tb.tinyriscv_soc_top_0.u_rib.m3_data_o[31:0]
 -
 @22
 uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.fw_file_size[31:0]
+@200
+-
+-
+-SID
+@22
+uart_debug_tb.tinyriscv_soc_top_0.u_tinyriscv.pc_pc_o[31:0]
+@28
+uart_debug_tb.tinyriscv_soc_top_0.uart_0.tx_data_valid
+@22
+uart_debug_tb.tinyriscv_soc_top_0.uart_0.tx_data[7:0]
+@28
+uart_debug_tb.tinyriscv_soc_top_0.uart_0.tx_pin
+@22
+uart_debug_tb.tinyriscv_soc_top_0.uart_0.uart_ctrl[31:0]
+@200
+-
 [pattern_trace] 1
 [pattern_trace] 0
