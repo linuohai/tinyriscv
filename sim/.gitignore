@@ -6,3 +6,4 @@
 inst.data
 out.vvp
 tinyriscv_soc_tb.vcd
+*.vpp

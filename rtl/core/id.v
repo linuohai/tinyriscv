@@ -290,6 +290,12 @@ module id(
                     end
                 endcase
             end
+            `INST_TYPE_sID: begin
+                reg_we_o = `WriteDisable;
+                reg_waddr_o = `ZeroReg;
+                reg1_raddr_o = `ZeroReg;
+                reg2_raddr_o = `ZeroReg;
+            end
             default: begin
                 reg_we_o = `WriteDisable;
                 reg_waddr_o = `ZeroReg;

@@ -52,24 +52,27 @@ module uart(
     reg rx_q0;
     reg rx_q1;
     wire rx_negedge;
-    reg rx_start;                      // RX使能
-    reg[3:0] rx_clk_edge_cnt;          // clk时钟沿的个数
-    reg rx_clk_edge_level;             // clk沿电平
+    reg rx_start;                      // RX使能，接收到start bit一直拉高，直到本次接收完成或读使能拉低
+    reg[3:0] rx_clk_edge_cnt;          // 分频后clk时钟沿的个数
+    reg rx_clk_edge_level;             // 分频后的clk，但是duty只有一个clk（正常时钟）
     reg rx_done;
-    reg[15:0] rx_clk_cnt;
-    reg[15:0] rx_div_cnt;
+    reg[15:0] rx_clk_cnt;              // 分频计数器
+    reg[15:0] rx_div_cnt;              // 分频系数，根据波特率决定
     reg[7:0] rx_data;
-    reg rx_over;
+    reg rx_over;                       // 接收完成标志，接收完成后拉高，只会拉高一个正常的clk
 
     localparam UART_CTRL = 8'h0;
     localparam UART_STATUS = 8'h4;
     localparam UART_BAUD = 8'h8;
     localparam UART_TXDATA = 8'hc;
     localparam UART_RXDATA = 8'h10;
+    // ASCII for 2024316372
+    // localparam SCHOOL_ID = {8'h50, 8'h48, 8'h50, 8'h52, 8'h51, 8'h49, 8'h54, 8'h51, 8'h55, 8'h50};
 
     // addr: 0x00
     // rw. bit[0]: tx enable, 1 = enable, 0 = disable
     // rw. bit[1]: rx enable, 1 = enable, 0 = disable
+    // rw. bit[2]: senID enable, 1 = enable, 0 = disable
     reg[31:0] uart_ctrl;
 
     // addr: 0x04
@@ -86,6 +89,9 @@ module uart(
     // ro. rx data
     reg[31:0] uart_rx;
 
+    //school id counter
+    reg[3:0] id_cnt;
+
     assign tx_pin = tx_reg;
 
 
@@ -97,6 +103,7 @@ module uart(
             uart_rx <= 32'h0;
             uart_baud <= BAUD_115200;
             tx_data_valid <= 1'b0;
+            id_cnt <= 4'h0;
         end else begin
             if (we_i == 1'b1) begin
                 case (addr_i[7:0])
@@ -117,7 +124,60 @@ module uart(
                         end
                     end
                 endcase
-            end else begin
+            end 
+            // processing send ID instruction
+            else if (uart_ctrl[2] == 1'b1 & uart_ctrl[0] == 1'b1) begin
+                    if (id_cnt == 4'h9) begin
+                        id_cnt <= 4'h0;
+                        uart_ctrl <= 32'h0;
+                        uart_status[0] <= 1'b0;
+                        tx_data <= 8'd50;
+                    end else if (tx_data_ready == 1'b1) begin
+                        //todo design adder self
+                        id_cnt <= id_cnt + 1'b1;
+                        // set to 0 incase of one data double send (check tx state machine)
+                        tx_data_valid <= 1'b0;
+                    end else begin
+                        tx_data_valid <= 1'b1;
+                        uart_status[0] <= 1'b1;
+                        case (id_cnt)
+                            4'h0: begin
+                                tx_data <= 8'd50;
+                            end
+                            4'h1: begin
+                                tx_data <= 8'd48;
+                            end
+                            4'h2: begin
+                                tx_data <= 8'd50;
+                            end
+                            4'h3: begin
+                                tx_data <= 8'd52;
+                            end
+                            4'h4: begin
+                                tx_data <= 8'd51;
+                            end
+                            4'h5: begin
+                                tx_data <= 8'd49;
+                            end
+                            4'h6: begin
+                                tx_data <= 8'd54;
+                            end
+                            4'h7: begin
+                                tx_data <= 8'd51;
+                            end
+                            4'h8: begin
+                                tx_data <= 8'd55;
+                            end
+                            4'h9: begin
+                                tx_data <= 8'd50;
+                            end
+                            default: begin
+                                tx_data <= 8'd0;
+                            end
+                        endcase
+                    end
+                end
+            else begin
                 tx_data_valid <= 1'b0;
                 if (tx_data_ready == 1'b1) begin
                     uart_status[0] <= 1'b0;
@@ -244,6 +304,8 @@ module uart(
             rx_div_cnt <= 16'h0;
         end else begin
             // 第一个时钟沿只需波特率分频系数的一半
+            // 因为接受数据都选取时钟周期中间的那个店的数值，所以最开始的上升沿（也就是uart读start bit的时刻）
+            // 在时钟周期的中间，所以需要分频系数的一半，后面每经过一个完整的分频周期都是到下一个bit的中间
             if (rx_start == 1'b1 && rx_clk_edge_cnt == 4'h0) begin
                 rx_div_cnt <= {1'b0, uart_baud[15:1]};
             end else begin

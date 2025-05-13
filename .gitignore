@@ -2,3 +2,11 @@
 *.o
 *.ko
 *.obj
+.vscode/
+*.view
+doc/
+netlist/
+
+*.vcd
+*.vvp
+backup/

@@ -700,6 +700,31 @@ module ex(
                     end
                 endcase
             end
+            `INST_TYPE_sID:begin
+                case (funct3)
+                    `INST_sID: begin
+                        jump_flag = `JumpDisable;
+                        hold_flag = `HoldDisable;
+                        jump_addr = `ZeroWord;
+                        reg_wdata = `ZeroWord;
+                        mem_wdata_o = 32'h05;// write 4b0101 to uart_ctrl regiter[3:0]
+                        mem_raddr_o = `ZeroWord;
+                        mem_waddr_o = 32'h3000_0000;
+                        mem_we = `WriteEnable;
+                        mem_req = `RIB_REQ;
+                    end
+                    default: begin
+                        jump_flag = `JumpDisable;
+                        hold_flag = `HoldDisable;
+                        jump_addr = `ZeroWord;
+                        mem_wdata_o = `ZeroWord;
+                        mem_raddr_o = `ZeroWord;
+                        mem_waddr_o = `ZeroWord;
+                        mem_we = `WriteDisable;
+                        reg_wdata = `ZeroWord;
+                    end
+                endcase
+            end
             `INST_TYPE_B: begin
                 case (funct3)
                     `INST_BEQ: begin

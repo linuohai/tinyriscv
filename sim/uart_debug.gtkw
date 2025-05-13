@@ -1,0 +1,100 @@
+[*]
+[*] GTKWave Analyzer v3.3.100 (w)1999-2019 BSI
+[*] Tue May 13 02:31:22 2025
+[*]
+[dumpfile] "D:\my_work\课程\流片课\tinyriscv\sim\sim\uart_debug_tb.vcd"
+[savefile] "D:\my_work\课程\流片课\tinyriscv\sim\uart_debug.gtkw"
+[timestart] 0
+[size] 2560 1369
+[pos] -243 -243
+*-14.000000 22856510000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] uart_debug_tb.
+[treeopen] uart_debug_tb.tinyriscv_soc_top_0.
+[sst_width] 311
+[signals_width] 372
+[sst_expanded] 1
+[sst_vpaned_height] 423
+@28
+uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.clk
+uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.debug_en_i
+@200
+-
+@22
+uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.state[13:0]
+@200
+-
+@23
+uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.fw_file_size[31:0]
+@22
+uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.remain_packet_count[15:0]
+@200
+-
+@24
+uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.rec_bytes_index[7:0]
+@200
+-
+@24
+uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_byte_index0[7:0]
+@c00022
+uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+@28
+(0)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(1)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(2)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(3)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(4)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(5)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(6)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(7)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(8)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(9)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(10)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(11)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(12)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(13)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(14)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(15)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(16)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(17)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(18)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(19)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(20)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(21)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(22)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(23)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(24)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(25)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(26)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(27)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(28)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(29)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(30)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+(31)uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.write_mem_data[31:0]
+@1401200
+-group_end
+@200
+-
+@22
+uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.crc_result[15:0]
+@200
+-
+-
+@22
+uart_debug_tb.tinyriscv_soc_top_0.u_rom.data_i[31:0]
+uart_debug_tb.tinyriscv_soc_top_0.u_rom.addr_i[31:0]
+@200
+-
+-
+-
+@28
+uart_debug_tb.tinyriscv_soc_top_0.u_rib.m3_req_i
+@22
+uart_debug_tb.tinyriscv_soc_top_0.u_rib.m3_addr_i[31:0]
+uart_debug_tb.tinyriscv_soc_top_0.u_rib.m3_data_i[31:0]
+uart_debug_tb.tinyriscv_soc_top_0.u_rib.m3_data_o[31:0]
+@200
+-
+@22
+uart_debug_tb.tinyriscv_soc_top_0.u_uart_debug.fw_file_size[31:0]
+[pattern_trace] 1
+[pattern_trace] 0

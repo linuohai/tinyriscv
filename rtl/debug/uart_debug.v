@@ -76,9 +76,9 @@ module uart_debug(
     reg[13:0] state;
 
     // 存放串口接收到的数据
-    reg[7:0] rx_data[0:131];
-    reg[7:0] rec_bytes_index;
-    reg[7:0] need_to_rec_bytes;
+    reg[7:0] rx_data[0:131];            //TODO 需要修改
+    reg[7:0] rec_bytes_index;           // 每存1个byte数据到rx_data里，索引加1
+    reg[7:0] need_to_rec_bytes;         // 指定接受packet的字节数量，会在每个REC_PACKET状态中更新为包的大小，即一个常量
     reg[15:0] remain_packet_count;
     reg[31:0] fw_file_size;
     reg[31:0] write_mem_addr;
@@ -90,7 +90,7 @@ module uart_debug(
 
     reg[15:0] crc_result;
     reg[3:0] crc_bit_index;
-    reg[7:0] crc_byte_index;
+    reg[7:0] crc_byte_index;        // 表示当前执行到第几个字节的CRC计算
 
 
     // 向总线请求信号
@@ -98,6 +98,7 @@ module uart_debug(
 
 
     always @ (posedge clk) begin
+        //! 保证了在 debug_en_i为0的时候保持整个系统端口全零，内部的状态机会停到S_WAIT_BYTE2状态
         if (rst == 1'b0 || debug_en_i == 1'b0) begin
             mem_addr_o <= 32'h0;
             mem_we_o <= 1'b0;
@@ -168,7 +169,10 @@ module uart_debug(
                 end
                 S_CRC_END: begin
                     if (crc_result == {rx_data[need_to_rec_bytes - 1], rx_data[need_to_rec_bytes - 2]}) begin
+                        //! 这个判断条件是在packet第一个包的时候进入，退出循环从write_mem状态退出
+                        //! 这里的加1是为了防止二次进入
                         if (need_to_rec_bytes == `UART_FIRST_PACKET_LEN && remain_packet_count == 16'h0) begin
+                            // TODO 这里需要根据实际包的大小进行更改，因为这里每个包是128字节，所以将低7位去掉
                             remain_packet_count <= {7'h0, fw_file_size[31:7]} + 1'b1;
                             state <= S_SEND_ACK;
                         end else begin
@@ -180,6 +184,14 @@ module uart_debug(
                     end
                 end
                 S_WRITE_MEM: begin
+                    // TODO 可能需要修改
+                    /////! 我认为这里是写入了CRC校验码，后期通过仿真进行验证
+                    //! 上面的说法是错的，因为write_mem_data赋值给mem_wdata_o还需要一个clk
+                    //! 所以实际上第一次的写入发生在进入WRITE_MEM状态后的一个clk，所以在write_mem_byte_index0变成CRC
+                    //! 校验码的位置后，需要再过一个clk，mem_wdata_o才会倍成功赋值，但是这个clk write_mem_byte_index0已经满足
+                    //! 下面这个判断条件，转换为下一个状态，所以不会写CRC校验码
+                    //! 采用这个条件的原因是 write_mem_data 是根据上一个clk的write_mem_byte_index0赋值的，所以当下面这个条件成立时，
+                    //! write_mem_data 的值是CRC检验码的值，如果下一个状态不变的话就会把CRC写进去，所以要在这个判断条件下进行状态的转变   
                     if (write_mem_byte_index0 == (need_to_rec_bytes + 2)) begin
                         state <= S_SEND_ACK;
                     end else begin
@@ -238,6 +250,7 @@ module uart_debug(
                     rx_data[rec_bytes_index] <= mem_rdata_i[7:0];
                     rec_bytes_index <= rec_bytes_index + 1'b1;
                 end
+                // 每次新接受包会更新index
                 S_REC_FIRST_PACKET: begin
                     rec_bytes_index <= 8'h0;
                 end
@@ -249,12 +262,14 @@ module uart_debug(
     end
 
     // 固件大小
+    // 用于赋值packet的数量
     always @ (posedge clk) begin
         if (rst == 1'b0 || debug_en_i == 1'b0) begin
             fw_file_size <= 32'h0;
         end else begin
             case (state)
                 S_CRC_START: begin
+                    //! 这里需要根据实际包的大小进行更改，因为包大小的改变会影响记录文件大小位置的字段
                     fw_file_size <= {rx_data[61], rx_data[62], rx_data[63], rx_data[64]};
                 end
             endcase
@@ -262,6 +277,7 @@ module uart_debug(
     end
 
     // 烧写固件
+    // 写地址的产生
     always @ (posedge clk) begin
         if (rst == 1'b0 || debug_en_i == 1'b0) begin
             write_mem_addr <= 32'h0;
@@ -272,6 +288,7 @@ module uart_debug(
                 end
                 S_CRC_END: begin
                     if (write_mem_addr > 0)
+                        //! 因为在上一个write_mem状态中已经加了4，所以这里需要减去4 
                         write_mem_addr <= write_mem_addr - 4;
                 end
                 S_WRITE_MEM: begin
@@ -290,6 +307,8 @@ module uart_debug(
                     write_mem_data <= 32'h0;
                 end
                 S_CRC_END: begin
+                    //! 这个数据是为了在S_WRITE_MEM阶段发送给内存写的数据，每一个rx_data[i]都是一个字节
+                    //! rx_data[0]是第一个字节，代表的是包的序号，所以不进行写入
                     write_mem_data <= {rx_data[4], rx_data[3], rx_data[2], rx_data[1]};
                 end
                 S_WRITE_MEM: begin

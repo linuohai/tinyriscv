@@ -127,6 +127,11 @@
 `define INST_BLTU   3'b110
 `define INST_BGEU   3'b111
 
+//! AMO but self extension
+`define INST_TYPE_sID    7'b0101111
+`define INST_sID         3'b000  
+`define INST_IF          3'b001  
+
 // CSR inst
 `define INST_CSR    7'b1110011
 `define INST_CSRRW  3'b001

@@ -49,7 +49,7 @@ import serial
 |-------------------------------------------------------------------|
 '''
 
-
+# 创建了只有一个元素的列表，这个列表的值是0x6
 ACK = bytes([0x6])
 FIRST_PACKET_LEN = 131
 FILE_NAME_INDEX = 1
@@ -59,6 +59,8 @@ FIRST_PACKET_CRC1_INDEX = 130
 OTHER_PACKET_LEN = 131
 
 
+# serial_com = ...: 这将新创建的 Serial 对象赋值给变量 serial_com
+# 可以使用 serial_com 这个变量来调用 Serial 对象的各种方法（如 open(), read(), write(),）来配置串口参数、打开/关闭串口
 serial_com = serial.Serial()
 
 
@@ -111,11 +113,19 @@ def serial_read(length, timeout):
 def calc_crc16(data):
     crc = 0xFFFF
     for pos in data:
+        #! 协议要求的减去初始值,CRC在这里就代表的是被除数
         crc ^= pos
         for i in range(8):
+            #! crc & 1: 检查crc的最低位（单个byte的最高位）是否为1
+            #! 这里CRC的操作是翻转的，我认为只是因为补位是在高位补位的，所以真正的数据会在低位
+            #! 每次都要判断低位是否为1，实际上就是判断当前循环的这一bit的商位是否为1
+            #! 如果(crc & 1) != 0，说明这个商位是1，应该用CRC直接减去除数
+            #! crc >>= 1: 将crc右移一位是因为CRC规定的除数最高位是1，所以不用计算，直接算剩下的即可
+            #! 如果次高位减下来还是1就仍然走这个流程
             if ((crc & 1) != 0):
                 crc >>= 1
                 crc ^= 0xA001
+            #! 如果最高位是0，说明这个商位是0，直接右移一位就可以了
             else:
                 crc >>= 1
     return crc
@@ -137,6 +147,8 @@ def main():
         i = FILE_NAME_INDEX
         # 2.文件名
         for c in bin_file_name:
+            #! ord() 是 Python 内置函数，它接受一个字符（长度为 1 的字符串）作为参数。
+            #! 它返回该字符的 Unicode 码点，这是一个整数。例如，ord('A') 会返回 65，ord('a') 会返回 97。
             packet[i] = ord(c)
             i = i + 1
         # 3.文件大小
@@ -144,6 +156,8 @@ def main():
         packet[FILE_SIZE_INDEX + 1] = (bin_file_size >> 16) & 0xff
         packet[FILE_SIZE_INDEX + 2] = (bin_file_size >> 8) & 0xff
         packet[FILE_SIZE_INDEX + 3] = (bin_file_size >> 0) & 0xff
+        #! packet[start:end] 这样的切片会选取从索引 start 开始，到索引 end-1 结束的元素
+        #! 代码 packet[1:129] 选择了 packet 中的 128 个字节
         crc = calc_crc16(packet[1:129])
         # 4.CRC
         packet[FIRST_PACKET_CRC0_INDEX] = (crc >> 0) & 0xff
@@ -153,6 +167,8 @@ def main():
         # 5.发送
         serial_write(bytes(packet))
         # 6.读应答
+        # 1 作为第一个参数传递给 serial_read 函数的 length 形参
+        # 3 作为第二个参数传递给 serial_read 函数的 timeout 形参
         ack = serial_read(1, 3)
         if (ack != ACK):
             print('packet0 NACK from slave')
@@ -179,7 +195,6 @@ def main():
                 packet[FIRST_PACKET_CRC0_INDEX] = (crc >> 0) & 0xff
                 packet[FIRST_PACKET_CRC1_INDEX] = (crc >> 8) & 0xff
                 serial_write(bytes(packet))
-                ack = serial_read(1, 3)
                 if (ack != ACK):
                     print('NACK1 from slave')
                     return

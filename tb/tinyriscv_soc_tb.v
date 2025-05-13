@@ -52,7 +52,8 @@ module tinyriscv_soc_tb;
 
 `ifdef TEST_PROG
         wait(x26 == 32'b1)   // wait sim end, when x26 == 1
-        #100
+        // for check uart result
+        #1000000
         if (x27 == 32'b1) begin
             $display("~~~~~~~~~~~~~~~~~~~ TEST_PASS ~~~~~~~~~~~~~~~~~~~");
             $display("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
@@ -488,7 +489,7 @@ module tinyriscv_soc_tb;
 
     // sim timeout
     initial begin
-        #500000
+        #5000000
         $display("Time Out.");
         $finish;
     end
