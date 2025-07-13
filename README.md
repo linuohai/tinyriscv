@@ -1,3 +1,8 @@
+在上板测试FPGA时，用顶层的tinyriscv_fw_downloader.py，执行`python.exe .\tinyriscv_fw_downloader.py COM5 D:\my_work\课程\流片课\tinyriscv\sim\inst.data`这个命令
+
+inst.data里的值手动从tests/example里面找
+
+---
 与本项目配套的设计文档[《从零开始写RISC-V处理器》](https://liangkangnan.gitee.io/2020/04/29/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E5%86%99RISC-V%E5%A4%84%E7%90%86%E5%99%A8/)，目前已经更新完第三章硬件篇，开始更新软件篇。
 
 # 1.初衷

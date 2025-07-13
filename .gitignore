@@ -10,3 +10,6 @@ netlist/
 *.vcd
 *.vvp
 backup/
+sim/i2c_tb
+sim/uart_debug_tb
+sim/inst.data.bin

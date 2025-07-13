@@ -1,5 +1,5 @@
 
-IF:     file format elf32-littleriscv
+simple：     文件格式 elf32-littleriscv
 
 
 Disassembly of section .init:
@@ -11,7 +11,7 @@ Disassembly of section .init:
    c:	ff810113          	addi	sp,sp,-8 # 10004000 <__freertos_irq_stack_top>
   10:	00000d13          	li	s10,0
   14:	00000d93          	li	s11,0
-  18:	23c00513          	li	a0,572
+  18:	24c00513          	li	a0,588
   1c:	10000597          	auipc	a1,0x10000
   20:	fe458593          	addi	a1,a1,-28 # 10000000 <__bss_start>
   24:	10000617          	auipc	a2,0x10000
@@ -30,7 +30,7 @@ Disassembly of section .init:
   58:	00052023          	sw	zero,0(a0)
   5c:	00450513          	addi	a0,a0,4
   60:	feb56ce3          	bltu	a0,a1,58 <_start+0x58>
-  64:	170000ef          	jal	ra,1d4 <_init>
+  64:	184000ef          	jal	ra,1e8 <_init>
   68:	124000ef          	jal	ra,18c <main>
   6c:	00100d13          	li	s10,1
 
@@ -76,7 +76,7 @@ Disassembly of section .text:
 000000f4 <test_if_asynchronous>:
   f4:	01f55613          	srli	a2,a0,0x1f
   f8:	00060663          	beqz	a2,104 <handle_synchronous>
-  fc:	10c000ef          	jal	ra,208 <trap_handler>
+  fc:	11c000ef          	jal	ra,218 <trap_handler>
  100:	00c0006f          	j	10c <asynchronous_return>
 
 00000104 <handle_synchronous>:
@@ -121,55 +121,79 @@ Disassembly of section .text:
  18c:	ff010113          	addi	sp,sp,-16
  190:	00812623          	sw	s0,12(sp)
  194:	01010413          	addi	s0,sp,16
- 198:	300007b7          	lui	a5,0x30000
- 19c:	00100713          	li	a4,1
- 1a0:	00e7a023          	sw	a4,0(a5) # 30000000 <__freertos_irq_stack_top+0x1fffc000>
- 1a4:	08000f93          	li	t6,128
- 1a8:	00000f13          	li	t5,0
- 1ac:	00af2f2f          	amoadd.w	t5,a0,(t5)
- 1b0:	01af2f2f          	amoadd.w	t5,s10,(t5)
- 1b4:	03af2f2f          	amoadd.w.rl	t5,s10,(t5)
- 1b8:	02cf2f2f          	amoadd.w.rl	t5,a2,(t5)
- 1bc:	000f2f2f          	amoadd.w	t5,zero,(t5)
- 1c0:	00000793          	li	a5,0
- 1c4:	00078513          	mv	a0,a5
- 1c8:	00c12403          	lw	s0,12(sp)
- 1cc:	01010113          	addi	sp,sp,16
- 1d0:	00008067          	ret
+ 198:	400007b7          	lui	a5,0x40000
+ 19c:	55555737          	lui	a4,0x55555
+ 1a0:	55570713          	addi	a4,a4,1365 # 55555555 <__freertos_irq_stack_top+0x45551555>
+ 1a4:	00e7a023          	sw	a4,0(a5) # 40000000 <__freertos_irq_stack_top+0x2fffc000>
+ 1a8:	400007b7          	lui	a5,0x40000
+ 1ac:	00478793          	addi	a5,a5,4 # 40000004 <__freertos_irq_stack_top+0x2fffc004>
+ 1b0:	00010737          	lui	a4,0x10
+ 1b4:	e0270713          	addi	a4,a4,-510 # fe02 <__stack_size+0xde02>
+ 1b8:	00e7a023          	sw	a4,0(a5)
+ 1bc:	400007b7          	lui	a5,0x40000
+ 1c0:	00478793          	addi	a5,a5,4 # 40000004 <__freertos_irq_stack_top+0x2fffc004>
+ 1c4:	00010737          	lui	a4,0x10
+ 1c8:	d0270713          	addi	a4,a4,-766 # fd02 <__stack_size+0xdd02>
+ 1cc:	00e7a023          	sw	a4,0(a5)
+ 1d0:	400007b7          	lui	a5,0x40000
+ 1d4:	00478793          	addi	a5,a5,4 # 40000004 <__freertos_irq_stack_top+0x2fffc004>
+ 1d8:	00010737          	lui	a4,0x10
+ 1dc:	b0270713          	addi	a4,a4,-1278 # fb02 <__stack_size+0xdb02>
+ 1e0:	00e7a023          	sw	a4,0(a5)
+ 1e4:	fc5ff06f          	j	1a8 <main+0x1c>
 
-000001d4 <_init>:
- 1d4:	ff010113          	addi	sp,sp,-16
- 1d8:	00812623          	sw	s0,12(sp)
- 1dc:	01010413          	addi	s0,sp,16
- 1e0:	000007b7          	lui	a5,0x0
- 1e4:	07478793          	addi	a5,a5,116 # 74 <trap_entry>
- 1e8:	30579073          	csrw	mtvec,a5
- 1ec:	000027b7          	lui	a5,0x2
- 1f0:	88878793          	addi	a5,a5,-1912 # 1888 <_data_lma+0x164c>
- 1f4:	30079073          	csrw	mstatus,a5
- 1f8:	00000013          	nop
- 1fc:	00c12403          	lw	s0,12(sp)
- 200:	01010113          	addi	sp,sp,16
- 204:	00008067          	ret
+000001e8 <_init>:
+ 1e8:	ff010113          	addi	sp,sp,-16
+ 1ec:	00812623          	sw	s0,12(sp)
+ 1f0:	01010413          	addi	s0,sp,16
+ 1f4:	07400793          	li	a5,116
+ 1f8:	30579073          	csrw	mtvec,a5
+ 1fc:	000027b7          	lui	a5,0x2
+ 200:	88878793          	addi	a5,a5,-1912 # 1888 <_data_lma+0x163c>
+ 204:	30079073          	csrw	mstatus,a5
+ 208:	00000013          	nop
+ 20c:	00c12403          	lw	s0,12(sp)
+ 210:	01010113          	addi	sp,sp,16
+ 214:	00008067          	ret
 
-00000208 <trap_handler>:
- 208:	fe010113          	addi	sp,sp,-32
- 20c:	00112e23          	sw	ra,28(sp)
- 210:	00812c23          	sw	s0,24(sp)
- 214:	02010413          	addi	s0,sp,32
- 218:	fea42623          	sw	a0,-20(s0)
- 21c:	feb42423          	sw	a1,-24(s0)
- 220:	00000097          	auipc	ra,0x0
- 224:	000000e7          	jalr	zero # 0 <_start>
- 228:	00000013          	nop
- 22c:	01c12083          	lw	ra,28(sp)
- 230:	01812403          	lw	s0,24(sp)
- 234:	02010113          	addi	sp,sp,32
- 238:	00008067          	ret
+00000218 <trap_handler>:
+ 218:	fe010113          	addi	sp,sp,-32
+ 21c:	00112e23          	sw	ra,28(sp)
+ 220:	00812c23          	sw	s0,24(sp)
+ 224:	02010413          	addi	s0,sp,32
+ 228:	fea42623          	sw	a0,-20(s0)
+ 22c:	feb42423          	sw	a1,-24(s0)
+ 230:	00000097          	auipc	ra,0x0
+ 234:	000000e7          	jalr	zero # 0 <_start>
+ 238:	00000013          	nop
+ 23c:	01c12083          	lw	ra,28(sp)
+ 240:	01812403          	lw	s0,24(sp)
+ 244:	02010113          	addi	sp,sp,32
+ 248:	00008067          	ret
 
 Disassembly of section .stack:
 
 10002000 <__freertos_irq_stack_top-0x2000>:
+	...
+
+Disassembly of section .riscv.attributes:
+
+00000000 <.riscv.attributes>:
+   0:	2041                	jal	80 <trap_entry+0xc>
+   2:	0000                	unimp
+   4:	7200                	flw	fs0,32(a2)
+   6:	7369                	lui	t1,0xffffa
+   8:	01007663          	bgeu	zero,a6,14 <_start+0x14>
+   c:	0016                	c.slli	zero,0x5
+   e:	0000                	unimp
+  10:	1004                	addi	s1,sp,32
+  12:	7205                	lui	tp,0xfffe1
+  14:	3376                	fld	ft6,376(sp)
+  16:	6932                	flw	fs2,12(sp)
+  18:	7032                	flw	ft0,44(sp)
+  1a:	5f30                	lw	a2,120(a4)
+  1c:	326d                	jal	fffff9c6 <__freertos_irq_stack_top+0xefffb9c6>
+  1e:	3070                	fld	fa2,224(s0)
 	...
 
 Disassembly of section .comment:
@@ -177,26 +201,17 @@ Disassembly of section .comment:
 00000000 <.comment>:
    0:	3a434347          	fmsub.d	ft6,ft6,ft4,ft7,rmm
    4:	2820                	fld	fs0,80(s0)
-   6:	20554e47          	fmsub.s	ft8,fa0,ft5,ft4,rmm
-   a:	434d                	li	t1,19
-   c:	2055                	jal	b0 <trap_entry+0x3c>
-   e:	6345                	lui	t1,0x11
-  10:	696c                	flw	fa1,84(a0)
-  12:	7370                	flw	fa2,100(a4)
-  14:	2065                	jal	bc <trap_entry+0x48>
-  16:	4952                	lw	s2,20(sp)
-  18:	562d4353          	0x562d4353
-  1c:	4520                	lw	s0,72(a0)
-  1e:	626d                	lui	tp,0x1b
-  20:	6465                	lui	s0,0x19
-  22:	6564                	flw	fs1,76(a0)
-  24:	2064                	fld	fs1,192(s0)
-  26:	2c434347          	0x2c434347
-  2a:	3620                	fld	fs0,104(a2)
-  2c:	2d34                	fld	fa3,88(a0)
-  2e:	6962                	flw	fs2,24(sp)
-  30:	2974                	fld	fa3,208(a0)
-  32:	3820                	fld	fs0,112(s0)
-  34:	322e                	fld	ft4,232(sp)
-  36:	302e                	fld	ft0,232(sp)
-	...
+   6:	69466953          	0x69466953
+   a:	6576                	flw	fa0,92(sp)
+   c:	4720                	lw	s0,72(a4)
+   e:	38204343          	fmadd.s	ft6,ft0,ft2,ft7,rmm
+  12:	332e                	fld	ft6,232(sp)
+  14:	302e                	fld	ft0,232(sp)
+  16:	322d                	jal	fffff940 <__freertos_irq_stack_top+0xefffb940>
+  18:	3230                	fld	fa2,96(a2)
+  1a:	2e30                	fld	fa2,88(a2)
+  1c:	3430                	fld	fa2,104(s0)
+  1e:	302e                	fld	ft0,232(sp)
+  20:	2029                	jal	2a <_start+0x2a>
+  22:	2e38                	fld	fa4,88(a2)
+  24:	00302e33          	sgtz	t3,gp

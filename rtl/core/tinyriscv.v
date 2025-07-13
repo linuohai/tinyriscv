@@ -27,6 +27,7 @@ module tinyriscv(
     output wire[`MemBus] rib_ex_data_o,        // 写入外设的数据
     output wire rib_ex_req_o,                  // 访问外设请求
     output wire rib_ex_we_o,                   // 写外设标志
+    input wire s7_data_valid_i,               // 从总线输入的i2c设备7数据有效标志
 
     output wire[`MemAddrBus] rib_pc_addr_o,    // 取指地址
     input wire[`MemBus] rib_pc_data_i,         // 取到的指令内容
@@ -323,7 +324,8 @@ module tinyriscv(
         .csr_rdata_i(ie_csr_rdata_o),
         .csr_wdata_o(ex_csr_wdata_o),
         .csr_we_o(ex_csr_we_o),
-        .csr_waddr_o(ex_csr_waddr_o)
+        .csr_waddr_o(ex_csr_waddr_o),
+        .s7_data_valid_i(s7_data_valid_i)
     );
 
     // div模块例化

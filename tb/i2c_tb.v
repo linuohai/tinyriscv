@@ -2,29 +2,37 @@
 
 `include "../rtl/core/defines.v"
 
-// UART Debug Testbench
-module uart_debug_tb;
+// I2C Testbench with separate Temperature Sensor module
+module i2c_tb;
 
-    // 参数化设置
+    // 参数化设置 (从uart_debug_tb.v复制)
     parameter PACKET_DATA_SIZE = 32;  // 每个包的数据大小（字节）
     parameter FILE_SIZE_INDEX = 24;     // 第一个包中文件大小字段索引
     parameter BAUD_PERIOD = 8680;       // 115200波特率下的位周期(ns)
-    parameter TEST_FILE = "inst.data";   // 测试文件名
+    parameter TEST_FILE = "inst.data";   // I2C测试文件名
     parameter MAX_ROM_SIZE = 256;      // 最大ROM大小(字)
 
+    // 时钟和复位
     reg clk;
     reg rst;
-    reg uart_debug_pin;  // uart debug使能信号
+    reg uart_debug_pin;
 
-    // UART Tx/Rx信号
-    wire uart_tx_pin; 
+    // I2C信号
+    wire io_scl;
+    wire io_sda;
+    pullup(io_sda);
+
+    // UART信号
+    wire uart_tx_pin;
     reg uart_rx_pin;
-    
-    // 用于各种任务和循环的整数变量
+
+    // 测试控制信号
     integer i, j, k, p, addr;
+    reg [7:0] received_data;
+    reg test_pass;
     reg verify_ok;
-    
-    // 文件处理相关
+
+    // 文件处理相关 (从uart_debug_tb.v复制)
     integer file_size_bytes;       // 文件大小(字节)
     integer packet_count;          // 包的数量
     
@@ -45,8 +53,11 @@ module uart_debug_tb;
     // 字节缓冲区，用于构建数据包
     reg [7:0] byte_buffer[0:MAX_ROM_SIZE*4-1];  // 每个字4个字节
 
+    // 温度传感器参数
+    parameter [15:0] EXPECTED_TEMP_DATA = 16'h1900;
+
     // 时钟信号，50MHz
-    always #10 clk = ~clk;  
+    always #10 clk = ~clk;
 
     // 监控ROM中的内容
     wire [31:0] rom_data[0:MAX_ROM_SIZE-1]; 
@@ -56,8 +67,17 @@ module uart_debug_tb;
             assign rom_data[gi] = tinyriscv_soc_top_0.u_rom._rom[gi];
         end
     endgenerate
+
+    // 监控CPU执行状态
+    wire cpu_halt = tinyriscv_soc_top_0.u_tinyriscv.u_ctrl.hold_flag_o != 2'b00;
     
-    // 模拟串口发送一个字节
+    // 监控I2C数据有效信号
+    wire i2c_data_valid = tinyriscv_soc_top_0.s7_data_valid_i;
+    
+    // 监控读取的I2C数据
+    wire [31:0] i2c_read_data = tinyriscv_soc_top_0.s7_data_i;
+
+    // 模拟串口发送一个字节 (从uart_debug_tb.v复制)
     task uart_send_byte;
         input [7:0] data;
         integer bit_idx; // 添加局部变量
@@ -78,7 +98,7 @@ module uart_debug_tb;
         end
     endtask
 
-    // 验证ROM内容
+    // 验证ROM内容 (从uart_debug_tb.v复制)
     task verify_rom_data;
         input integer words_to_check;
         output reg result;
@@ -86,18 +106,18 @@ module uart_debug_tb;
             result = 1'b1;
             for (addr = 0; addr < words_to_check && addr < MAX_ROM_SIZE; addr = addr + 1) begin
                 if (rom_data[addr] !== expected_rom_data[addr]) begin
-                    $display("ROM Verification Failed at Address 0x%h: Expected = 0x%h, Actual = 0x%h", 
+                    $display("[ERROR] ROM Verification Failed at Address 0x%h: Expected = 0x%h, Actual = 0x%h", 
                              addr*4, expected_rom_data[addr], rom_data[addr]);
                     result = 1'b0;
                 end
             end
             
             if (result) begin
-                $display("ROM Verification Successful! All %0d words match expected values", words_to_check);
+                $display("[PASS] ROM Verification Successful! All %0d words match expected values", words_to_check);
             end
         end
     endtask
-    
+
     // UART接收字节任务
     task uart_receive_byte;
         output [7:0] data;
@@ -111,7 +131,7 @@ module uart_debug_tb;
             
             // 确认是起始位
             if (uart_tx_pin != 1'b0) begin
-                $display("Error: Invalid UART start bit");
+                $display("[ERROR] Invalid UART start bit");
             end else begin
                 #(BAUD_PERIOD); // 等待到第一个数据位中间
                 
@@ -123,33 +143,40 @@ module uart_debug_tb;
                 
                 // 检查停止位（高电平）
                 if (uart_tx_pin != 1'b1) begin
-                    $display("Error: Invalid UART stop bit");
+                    $display("[ERROR] Invalid UART stop bit");
                 end
             end
         end
     endtask
     
-    // UART接收并显示字符串，设置固定接收10个字符后结束
+    // UART接收并显示字符串
     task receive_uart_output;
         input integer timeout_cycles;
         reg [7:0] rx_byte;
         integer timeout_counter;
-        integer char_counter;    // 计数收到的字符
-        parameter MAX_CHARS = 1;  // 设置为固定接收的10个字符
+        integer char_counter;
+        parameter MAX_CHARS = 1;  // 设置为固定接收的1个字符（温度高字节）
         begin
             timeout_counter = 0;
             char_counter = 0;
-            $display("Waiting for UART output (will stop after %0d chars)...", MAX_CHARS);
+            $display("[INFO] Waiting for UART output (will stop after %0d chars)...", MAX_CHARS);
             
             while ((timeout_counter < timeout_cycles) && (char_counter < MAX_CHARS)) begin
                 if (uart_tx_pin == 1'b0) begin  // 检测到起始位
                     uart_receive_byte(rx_byte);
-                    // $write("%c", rx_byte);  // 打印字符
-                    $write("0x%h", rx_byte);  // 打印16进制
-                    $fflush();  // 刷新输出
+                    $display("[DATA] Received UART data: 0x%h (expected: 0x%h)", rx_byte, EXPECTED_TEMP_DATA[14:7]);
                     
-                    char_counter = char_counter + 1;  // 增加字符计数
-                    timeout_counter = 0;  // 重置超时计数器
+                    // 验证接收到的数据是否正确
+                    if (rx_byte == EXPECTED_TEMP_DATA[14:7]) begin
+                        test_pass = 1'b1;
+                        $display("[PASS] I2C test PASSED! UART output matches expected temperature data");
+                    end else begin
+                        $display("[FAIL] I2C test FAILED! UART output (0x%h) doesn't match expected (0x%h)", 
+                                rx_byte, EXPECTED_TEMP_DATA[14:7]);
+                    end
+                    
+                    char_counter = char_counter + 1;
+                    timeout_counter = 0;
                 end else begin
                     #100;  // 等待100ns
                     timeout_counter = timeout_counter + 1;
@@ -157,9 +184,9 @@ module uart_debug_tb;
             end
             
             if (timeout_counter >= timeout_cycles) begin
-                $display("\nUART reception timeout (received %0d of %0d chars)", char_counter, MAX_CHARS);
+                $display("[WARN] UART reception timeout (received %0d of %0d chars)", char_counter, MAX_CHARS);
             end else if (char_counter >= MAX_CHARS) begin
-                $display("\nUART reception completed - received all %0d chars", MAX_CHARS);
+                $display("[PASS] UART reception completed - received all %0d chars", MAX_CHARS);
             end
         end
     endtask
@@ -170,12 +197,16 @@ module uart_debug_tb;
         rst = `RstEnable;
         uart_debug_pin = 1'b0;
         uart_rx_pin = 1'b1;
-        
+        test_pass = 1'b0;
+
         // 初始化变量
         for (k = 0; k < MAX_ROM_SIZE; k = k + 1) begin
             expected_rom_data[k] = 32'h0;
             rom_init_data[k] = 32'h0;
         end
+
+        $display("[START] I2C Temperature Sensor Test Starting...");
+        $display("[INFO] Expected temperature data: 0x%h", EXPECTED_TEMP_DATA);
 
         // 直接读取十六进制文件到rom_init_data数组
         $readmemh(TEST_FILE, rom_init_data);
@@ -207,24 +238,25 @@ module uart_debug_tb;
         // 计算所需包数
         packet_count = (file_size_bytes + PACKET_DATA_SIZE - 1) / PACKET_DATA_SIZE; // 向上取整
         
-        $display("UART Debug Test Starting...");
-        $display("Test file: %s, Size: %0d bytes, Packets needed: %0d", TEST_FILE, file_size_bytes, packet_count + 1); // +1表示包0
+        $display("[INFO] Test file: %s, Size: %0d bytes, Packets needed: %0d", TEST_FILE, file_size_bytes, packet_count + 1);
         
         // 复位释放
         #40
         rst = `RstDisable;
         #200
         
-        // 激活UART Debug模块
+        // 激活UART Debug模块来加载程序
         uart_debug_pin = 1'b1;
         #100
+        
+        // === 发送数据包加载I2C测试程序 ===
         
         // 准备第一个包数据 (包0-文件信息包)
         for (p = 0; p < PACKET_DATA_SIZE; p = p + 1) begin
             packet_data[p] = 8'h00; // 初始化为0
         end
         
-        // 设置文件名 - 简单起见，使用硬编码字符
+        // 设置文件名
         packet_data[0] = "i";  // inst.data的"i"
         packet_data[1] = "n";  // 等等
         packet_data[2] = "s";
@@ -241,7 +273,7 @@ module uart_debug_tb;
         packet_data[FILE_SIZE_INDEX + 2] = (file_size_bytes >> 8) & 8'hFF;
         packet_data[FILE_SIZE_INDEX + 3] = file_size_bytes & 8'hFF;         // LSB
         
-        // 计算第一个包的CRC - 直接内联计算，不使用任务
+        // 计算第一个包的CRC
         temp_crc = 16'hFFFF;
         for (pos = 0; pos < PACKET_DATA_SIZE; pos = pos + 1) begin
             temp_crc = temp_crc ^ packet_data[pos];
@@ -256,20 +288,15 @@ module uart_debug_tb;
         end
         packet_crc = temp_crc;
         
-        // 发送第一个包 (包0) - 不使用任务，直接内联发送
-        $display("Sending packet #0");
-        // 发送包序号
+        // 发送第一个包 (包0)
+        $display("[SEND] Sending I2C test program packet #0");
         uart_send_byte(8'h00);
-        // 发送数据
         for (j = 0; j < PACKET_DATA_SIZE; j = j + 1) begin
             uart_send_byte(packet_data[j]);
         end
-        // 发送CRC (低字节在前)
         uart_send_byte(packet_crc[7:0]);
         uart_send_byte(packet_crc[15:8]);
-        // 等待处理时间
         #(100000);
-        $display("Completed sending packet #0");
         
         // 发送剩余的数据包
         for (i = 0; i < packet_count; i = i + 1) begin
@@ -282,7 +309,7 @@ module uart_debug_tb;
                 end
             end
             
-            // 计算CRC - 直接内联计算，不使用任务
+            // 计算CRC
             temp_crc = 16'hFFFF;
             for (pos = 0; pos < PACKET_DATA_SIZE; pos = pos + 1) begin
                 temp_crc = temp_crc ^ packet_data[pos];
@@ -297,91 +324,84 @@ module uart_debug_tb;
             end
             packet_crc = temp_crc;
             
-            // 发送包 - 直接内联发送，不使用任务
-            $display("Sending packet %0d of %0d", i+1, packet_count);
-            // 发送包序号
+            // 发送包
+            $display("[SEND] Sending I2C test program packet %0d of %0d", i+1, packet_count);
             uart_send_byte(8'h01 + i[7:0]);
-            // 发送数据
             for (j = 0; j < PACKET_DATA_SIZE; j = j + 1) begin
                 uart_send_byte(packet_data[j]);
             end
-            // 发送CRC (低字节在前)
             uart_send_byte(packet_crc[7:0]);
             uart_send_byte(packet_crc[15:8]);
-            // 等待处理时间
             #(100000);
-            
-            // 在for循环内部，发送完每个包后添加：
-            $display("Completed sending packet %0d of %0d", i+1, packet_count);
         end
         
-        // 在所有包发送完后添加：
-        $display("All %0d packets sent, waiting for processing...", packet_count);
+        $display("[INFO] All %0d packets sent, waiting for processing...", packet_count);
         
         // 等待足够时间让数据写入ROM
-        // 等待10000000ns = 10ms
         #10000000
         
         // 关闭UART Debug模块
         uart_debug_pin = 1'b0;
         #100
         
-        // 验证ROM内容 - 只检查有效字数
+        // 验证ROM内容
         verify_rom_data(file_size_bytes/4, verify_ok);
         
         if (verify_ok) begin
-            $display("ROM verification successful, now resetting processor to run the program...");
+            $display("[PASS] ROM verification successful, resetting processor to run I2C test program...");
             
-            // 1. 重新复位核心
+            // 重新复位CPU开始执行I2C测试程序
             rst = `RstEnable;
             #100
             rst = `RstDisable;
             #100
             
-            // 2. 确保UART debug模式关闭
-            uart_debug_pin = 1'b0;
+            $display("[INFO] Processor reset, I2C test program should start running...");
             
-            $display("Processor reset, UART Debug mode disabled, starting to receive UART output...");
+            // 等待I2C操作完成并接收UART输出
+            receive_uart_output(10000000); // 10M周期超时
             
-            // 3. 接收SoC的UART输出信息
-            receive_uart_output(10000000); // 设置足够长的超时周期来接收输出
-            
-            $display("~~~~~~~~~~~~~~~~~~~ UART DEBUG TEST PASS ~~~~~~~~~~~~~~~~~~~");
-            $display("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-            $display("~~~~~~~~~ #####     ##     ####    #### ~~~~~~~~~");
-            $display("~~~~~~~~~ #    #   #  #   #       #     ~~~~~~~~~");
-            $display("~~~~~~~~~ #    #  #    #   ####    #### ~~~~~~~~~");
-            $display("~~~~~~~~~ #####   ######       #       #~~~~~~~~~");
-            $display("~~~~~~~~~ #       #    #  #    #  #    #~~~~~~~~~");
-            $display("~~~~~~~~~ #       #    #   ####    #### ~~~~~~~~~");
-            $display("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
         end else begin
-            $display("~~~~~~~~~~~~~~~~~~~ UART DEBUG TEST FAIL ~~~~~~~~~~~~~~~~~~~~");
-            $display("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-            $display("~~~~~~~~~~######    ##       #    #     ~~~~~~~~~~");
-            $display("~~~~~~~~~~#        #  #      #    #     ~~~~~~~~~~");
-            $display("~~~~~~~~~~#####   #    #     #    #     ~~~~~~~~~~");
-            $display("~~~~~~~~~~#       ######     #    #     ~~~~~~~~~~");
-            $display("~~~~~~~~~~#       #    #     #    #     ~~~~~~~~~~");
-            $display("~~~~~~~~~~#       #    #     #    ######~~~~~~~~~~");
-            $display("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            $display("[FAIL] ROM verification failed, cannot proceed with I2C test");
         end
-        
+
+        // 测试结果
+        if (test_pass) begin
+            $display("================== I2C TEST PASS ==================");
+            $display("===================================================");
+            $display("======= #####     ##     ####    #### =======");
+            $display("======= #    #   #  #   #       #     =======");
+            $display("======= #    #  #    #   ####    #### =======");
+            $display("======= #####   ######       #       #=======");
+            $display("======= #       #    #  #    #  #    #=======");
+            $display("======= #       #    #   ####    #### =======");
+            $display("===================================================");
+        end else begin
+            $display("================== I2C TEST FAIL ==================");
+            $display("====================================================");
+            $display("========######    ##       #    #     ========");
+            $display("========#        #  #      #    #     ========");
+            $display("========#####   #    #     #    #     ========");
+            $display("========#       ######     #    #     ========");
+            $display("========#       #    #     #    #     ========");
+            $display("========#       #    #     #    ######========");
+            $display("====================================================");
+        end
+
         $finish;
     end
 
-    // 模拟超时
+    // 测试超时
     initial begin
-        // 200000000ns = 200ms
-        #200000000
-        $display("Test Timeout! Possible issue detected.");
+        #200000000; // 200ms超时
+        $display("[WARN] Test Timeout! I2C communication may have failed.");
         $finish;
     end
 
     // 生成波形文件
     initial begin
-        $dumpfile("uart_debug_tb.vcd");
-        $dumpvars(0, uart_debug_tb);
+        $dumpfile("i2c_tb.vcd");
+        $dumpvars(0, i2c_tb);
     end
 
     // 实例化SoC顶层
@@ -390,7 +410,17 @@ module uart_debug_tb;
         .rst(rst),
         .uart_debug_pin(uart_debug_pin),
         .uart_tx_pin(uart_tx_pin),
-        .uart_rx_pin(uart_rx_pin)
+        .uart_rx_pin(uart_rx_pin),
+        .io_scl(io_scl),
+        .io_sda(io_sda)
+    );
+
+    // 实例化温度传感器
+    temp_sensor temp_sensor_0(
+        .clk(clk),
+        .rst(rst),
+        .scl(io_scl),
+        .sda(io_sda)
     );
 
 endmodule 

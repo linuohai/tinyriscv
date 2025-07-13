@@ -1,0 +1,64 @@
+[*]
+[*] GTKWave Analyzer v3.3.100 (w)1999-2019 BSI
+[*] Tue May 13 14:51:40 2025
+[*]
+[dumpfile] "D:\my_work\课程\流片课\tinyriscv\sim\sim\tinyriscv_soc_tb.vcd"
+[savefile] "D:\my_work\课程\流片课\tinyriscv\sim\if_ins.gtkw"
+[timestart] 0
+[size] 2560 1369
+[pos] -1 -1
+*-16.000000 270000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tinyriscv_soc_tb.
+[treeopen] tinyriscv_soc_tb.tinyriscv_soc_top_0.
+[treeopen] tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.
+[sst_width] 250
+[signals_width] 356
+[sst_expanded] 1
+[sst_vpaned_height] 423
+@28
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.u_pc_reg.clk
+@200
+-
+@22
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.u_pc_reg.pc_o[31:0]
+@200
+-
+-
+@22
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.u_ex.inst_i[31:0]
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.u_ex.inst_addr_i[31:0]
+@200
+-
+-
+@28
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.u_ex.reg_we
+@22
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.u_regs.waddr_i[4:0]
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.u_regs.wdata_i[31:0]
+@200
+-
+@28
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.u_ex.imm_0
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.u_ex.rs1_nlt_rs2
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.u_ex.mem_we
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.u_ex.mem_we_o
+@22
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.u_ex.mem_waddr_o[31:0]
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_tinyriscv.u_ex.mem_wdata_o[31:0]
+@200
+-
+@28
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_rib.grant[1:0]
+tinyriscv_soc_tb.tinyriscv_soc_top_0.u_rib.m0_we_i
+@200
+-
+-uart
+@28
+tinyriscv_soc_tb.tinyriscv_soc_top_0.uart_0.we_i
+tinyriscv_soc_tb.tinyriscv_soc_top_0.uart_0.tx_data_valid
+@22
+tinyriscv_soc_tb.tinyriscv_soc_top_0.uart_0.tx_data[7:0]
+tinyriscv_soc_tb.tinyriscv_soc_top_0.uart_0.uart_ctrl[31:0]
+tinyriscv_soc_tb.tinyriscv_soc_top_0.uart_0.uart_status[31:0]
+[pattern_trace] 1
+[pattern_trace] 0

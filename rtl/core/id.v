@@ -290,11 +290,41 @@ module id(
                     end
                 endcase
             end
-            `INST_TYPE_sID: begin
-                reg_we_o = `WriteDisable;
-                reg_waddr_o = `ZeroReg;
-                reg1_raddr_o = `ZeroReg;
-                reg2_raddr_o = `ZeroReg;
+            `INST_TYPE_ext: begin
+                case (funct3)
+                    `INST_sID: begin
+                        reg_we_o = `WriteDisable;
+                        reg_waddr_o = `ZeroReg;
+                        reg1_raddr_o = `ZeroReg;
+                        reg2_raddr_o = `ZeroReg;
+                    end
+                    `INST_IF: begin
+                        reg_we_o = `WriteEnable;
+                        reg_waddr_o = rd;
+                        reg1_raddr_o = rs1;
+                        reg2_raddr_o = 5'h1f;
+                        op1_o = {{20{inst_i[31]}}, inst_i[31:20]};
+                        op2_o = `ZeroWord;
+                    end
+                    `INST_temp: begin
+                        reg_we_o = `WriteEnable;
+                        reg_waddr_o = rd;
+                        reg1_raddr_o = `ZeroReg;
+                        reg2_raddr_o = `ZeroReg;
+                        op1_o = `ZeroWord;
+                        op2_o = `ZeroWord;
+                        op1_jump_o = inst_addr_i;
+                    end
+                    default: begin
+                        reg_we_o = `WriteDisable;
+                        reg_waddr_o = `ZeroReg;
+                        reg1_raddr_o = `ZeroReg;
+                        reg2_raddr_o = `ZeroReg;
+                        op1_o = `ZeroWord;
+                        op2_o = `ZeroWord;
+                    end
+                endcase
+                
             end
             default: begin
                 reg_we_o = `WriteDisable;

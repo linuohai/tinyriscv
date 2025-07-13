@@ -87,6 +87,20 @@ module rib(
     input wire[`MemBus] s5_data_i,         // 从设备5读取到的数据
     output reg s5_we_o,                    // 从设备5写标志
 
+    // slave 6 interface, PWM
+    output reg[`MemAddrBus] s6_addr_o,     // 从设备6读、写地址
+    output reg[`MemBus] s6_data_o,         // 从设备6写数据
+    input wire[`MemBus] s6_data_i,         // 从设备6读取到的数据
+    output reg s6_we_o,                    // 从设备6写标志
+
+    // slave 7 interface, I2C
+    output reg[`MemAddrBus] s7_addr_o,     // 从设备7读、写地址
+    output reg[`MemBus] s7_data_o,         // 从设备7写数据
+    input wire[`MemBus] s7_data_i,         // 从设备7读取到的数据
+    output reg s7_we_o,                    // 从设备7写标志
+    input wire s7_data_valid_i,           // 从设备7数据输入的有效标志
+    output wire s7_data_valid_o,           // 从总线输出的设备7数据有效标志
+
     output reg hold_flag_o                 // 暂停流水线标志
 
     );
@@ -100,6 +114,8 @@ module rib(
     parameter [3:0]slave_3 = 4'b0011;
     parameter [3:0]slave_4 = 4'b0100;
     parameter [3:0]slave_5 = 4'b0101;
+    parameter [3:0]slave_6 = 4'b0110;
+    parameter [3:0]slave_7 = 4'b0111;
 
     parameter [1:0]grant0 = 2'h0;
     parameter [1:0]grant1 = 2'h1;
@@ -116,6 +132,8 @@ module rib(
     // 仲裁逻辑
     // 固定优先级仲裁机制
     // 优先级由高到低：主设备3，主设备0，主设备2，主设备1
+    // 这里的hold是为了hold住其他主设备，防止优先级高的主设备在使用时，其他主设备的请求被吞了
+    // 这里都是默认任何的写操作需要1个时钟周期完成，读操作在当前周期就可以完成
     always @ (*) begin
         if (req[3]) begin
             grant = grant3;
@@ -131,6 +149,9 @@ module rib(
             hold_flag_o = `HoldDisable;
         end
     end
+
+    // 传输从设备7数据有效标志
+    assign s7_data_valid_o = s7_data_valid_i;
 
     // 根据仲裁结果，选择(访问)对应的从设备
     always @ (*) begin
@@ -151,12 +172,17 @@ module rib(
         s3_data_o = `ZeroWord;
         s4_data_o = `ZeroWord;
         s5_data_o = `ZeroWord;
+        s6_data_o = `ZeroWord;
+        s7_data_o = `ZeroWord;
         s0_we_o = `WriteDisable;
         s1_we_o = `WriteDisable;
         s2_we_o = `WriteDisable;
         s3_we_o = `WriteDisable;
         s4_we_o = `WriteDisable;
         s5_we_o = `WriteDisable;
+        s6_we_o = `WriteDisable;
+        s7_we_o = `WriteDisable;
+
 
         case (grant)
             grant0: begin
@@ -197,11 +223,24 @@ module rib(
                         s5_data_o = m0_data_i;
                         m0_data_o = s5_data_i;
                     end
+                    slave_6: begin
+                        s6_we_o = m0_we_i;
+                        s6_addr_o = {{4'h0}, {m0_addr_i[27:0]}};
+                        s6_data_o = m0_data_i;
+                        m0_data_o = s6_data_i;
+                    end
+                    slave_7: begin
+                        s7_we_o = m0_we_i;
+                        s7_addr_o = {{4'h0}, {m0_addr_i[27:0]}};
+                        // s7_data_o = m0_data_i;      // 不需要写数据
+                        m0_data_o = s7_data_i;      // 读取数据
+                    end
                     default: begin
 
                     end
                 endcase
             end
+            //TODO 我认为这里可以修改，因为取指只会对rom进行读取
             grant1: begin
                 case (m1_addr_i[31:28])
                     slave_0: begin

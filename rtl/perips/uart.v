@@ -223,7 +223,7 @@ module uart(
         if (rst == 1'b0) begin
             state <= S_IDLE;
             cycle_cnt <= 16'd0;
-            tx_reg <= 1'b0;
+            tx_reg <= 1'b1;
             bit_cnt <= 4'd0;
             tx_data_ready <= 1'b0;
         end else begin

@@ -270,7 +270,7 @@ module uart_debug(
             case (state)
                 S_CRC_START: begin
                     //TODO 这里需要根据实际包的大小进行更改，因为包大小的改变会影响记录文件大小位置的字段
-                    fw_file_size <= {rx_data[29], rx_data[30], rx_data[31], rx_data[32]};
+                    fw_file_size <= {rx_data[25], rx_data[26], rx_data[27], rx_data[28]};
                 end
             endcase
         end
@@ -451,5 +451,16 @@ module uart_debug(
             endcase
         end
     end
+
+
+// ila_0 u_ila_0(
+//     .clk(clk),
+//     .probe0(rst),
+//     .probe1(debug_en_i),
+//     .probe2(req_o),
+//     .probe3(mem_we_o),
+//     .probe4(state),
+//     .probe5(fw_file_size)
+// );
 
 endmodule

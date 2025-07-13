@@ -75,7 +75,10 @@ module ex(
     // to ctrl
     output wire hold_flag_o,                // 是否暂停标志
     output wire jump_flag_o,                // 是否跳转标志
-    output wire[`InstAddrBus] jump_addr_o   // 跳转目的地址
+    output wire[`InstAddrBus] jump_addr_o,   // 跳转目的地址
+
+    // from i2c
+    input wire s7_data_valid_i
 
     );
 
@@ -143,7 +146,8 @@ module ex(
     assign mul_temp = mul_op1 * mul_op2;
     assign mul_temp_invert = ~mul_temp + 1;
 
-    assign mem_raddr_index = (reg1_rdata_i + {{20{inst_i[31]}}, inst_i[31:20]}) & 2'b11;
+    wire [`RegBus] reg1_plus_imm = reg1_rdata_i + {{20{inst_i[31]}}, inst_i[31:20]}; //for multiy-use
+    assign mem_raddr_index = reg1_plus_imm & 2'b11;
     assign mem_waddr_index = (reg1_rdata_i + {{20{inst_i[31]}}, inst_i[31:25], inst_i[11:7]}) & 2'b11;
 
     assign div_start_o = (int_assert_i == `INT_ASSERT)? `DivStop: div_start;
@@ -244,6 +248,12 @@ module ex(
         end
     end
 
+    // 处理扩展指令
+    wire rs1_nlt_rs2 = (reg1_rdata_i >= reg2_rdata_i);
+    wire imm_0       = (op1_i == `ZeroWord);
+
+
+    
     // 执行
     always @ (*) begin
         reg_we = reg_we_i;
@@ -700,7 +710,7 @@ module ex(
                     end
                 endcase
             end
-            `INST_TYPE_sID:begin
+            `INST_TYPE_ext:begin
                 case (funct3)
                     `INST_sID: begin
                         jump_flag = `JumpDisable;
@@ -712,6 +722,30 @@ module ex(
                         mem_waddr_o = 32'h3000_0000;
                         mem_we = `WriteEnable;
                         mem_req = `RIB_REQ;
+                    end
+                    `INST_temp: begin
+                        jump_flag = `JumpEnable & !s7_data_valid_i;
+                        jump_addr = op1_jump_i & {32{!s7_data_valid_i}};
+                        hold_flag = `HoldDisable;
+                        mem_we = `WriteDisable;
+                        mem_wdata_o = `ZeroWord;
+                        mem_waddr_o = `ZeroWord;
+                        mem_raddr_o = 32'h7002_0000 & {32{s7_data_valid_i}};            // 读取i2c中输出数据寄存器数据
+                        mem_req = `RIB_REQ & s7_data_valid_i;
+                        reg_wdata = {24'h0, mem_rdata_i[14:7]};                         // 读出规定的位数
+                        reg_we = `WriteEnable & s7_data_valid_i;
+                    end
+                    `INST_IF: begin
+                        jump_flag = `JumpDisable;
+                        hold_flag = `HoldDisable;
+                        jump_addr = `ZeroWord;
+                        mem_wdata_o = {32{imm_0 & rs1_nlt_rs2}} & {24'h0, reg1_rdata_i[7:0]};
+                        mem_raddr_o = `ZeroWord;
+                        mem_waddr_o = {32{imm_0 & rs1_nlt_rs2}} & 32'h3000_000c;
+                        mem_we = {32{imm_0 & rs1_nlt_rs2}};
+                        reg_wdata = ~imm_0   ?  reg1_plus_imm : 
+                                                rs1_nlt_rs2   ?  `ZeroWord  : reg1_rdata_i;
+                        mem_req = imm_0 & rs1_nlt_rs2;
                     end
                     default: begin
                         jump_flag = `JumpDisable;
